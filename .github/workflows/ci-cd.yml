@@ -29,6 +29,8 @@ jobs:
         working-directory: ./expensy_frontend
         run: npm run build
 
+      # (Optional) You can add "Test Frontend" steps if you have tests.
+
       # 4. Backend build and test
       - name: Install Backend Dependencies
         working-directory: ./expensy_backend
@@ -37,6 +39,8 @@ jobs:
       - name: Build Backend
         working-directory: ./expensy_backend
         run: npm run build
+
+      # (Optional) You can add "Test Backend" steps if you have tests.
 
   docker-build-push:
     needs: build-test
@@ -60,16 +64,16 @@ jobs:
       # 4. Build and Push Frontend Image
       - name: Build & Push Frontend Image
         run: |
-          docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest \
-            ./expensy_frontend/Dockerfile.frontend \
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest ./expensy_frontend \
+            -f ./expensy_frontend/Dockerfile.frontend \
             --build-arg NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
           docker push ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest
 
       # 5. Build and Push Backend Image
       - name: Build & Push Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest ./expensy_backend/Dockerfile.backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest ./expensy_backend \
+            -f ./expensy_backend/Dockerfile.backend
           docker push ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest
 
   deploy:
