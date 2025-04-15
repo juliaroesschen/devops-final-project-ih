@@ -29,6 +29,10 @@ jobs:
         working-directory: ./expensy_frontend
         run: npm run build
 
+      # (Optional) Add tests if available
+      # - name: Test Frontend
+      #   working-directory: ./expensy_frontend
+      #   run: npm test
 
       # 4. Backend build and test
       - name: Install Backend Dependencies
@@ -38,6 +42,11 @@ jobs:
       - name: Build Backend
         working-directory: ./expensy_backend
         run: npm run build
+
+      # (Optional) Add tests if available
+      # - name: Test Backend
+      #   working-directory: ./expensy_backend
+      #   run: npm test
 
   docker-build-push:
     needs: build-test
@@ -58,10 +67,12 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. Build and Push Frontend Image
+      # 4. Build and Push Frontend Image with build-arg
       - name: Build & Push Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest ./expensy_frontend \
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest \
+            ./expensy_frontend \
             -f ./expensy_frontend/Dockerfile.frontend \
             --build-arg NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
           docker push ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest
@@ -69,7 +80,9 @@ jobs:
       # 5. Build and Push Backend Image
       - name: Build & Push Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest ./expensy_backend \
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest \
+            ./expensy_backend \
             -f ./expensy_backend/Dockerfile.backend
           docker push ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest
 
@@ -83,13 +96,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # 2. Configure kubeconfig from GitHub Secret (assumes base64-encoded data)
+      # 2. Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-3
+
+      # 3. Verify AWS Credentials are Loaded
+      - name: Check AWS Identity
+        run: aws sts get-caller-identity
+
+      # 4. Configure kubeconfig from GitHub Secret (assumes your kubeconfig is base64-encoded)
       - name: Configure kubeconfig
         run: |
-           mkdir -p $HOME/.kube
-           echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
 
-      # 3. Deploy Kubernetes Manifests
+      # 5. Deploy Kubernetes Manifests
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/configs/
