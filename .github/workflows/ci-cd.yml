@@ -29,7 +29,6 @@ jobs:
         working-directory: ./expensy_frontend
         run: npm run build
 
-      # (Optional) You can add "Test Frontend" steps if you have tests.
 
       # 4. Backend build and test
       - name: Install Backend Dependencies
@@ -39,8 +38,6 @@ jobs:
       - name: Build Backend
         working-directory: ./expensy_backend
         run: npm run build
-
-      # (Optional) You can add "Test Backend" steps if you have tests.
 
   docker-build-push:
     needs: build-test
@@ -89,7 +86,8 @@ jobs:
       # 2. Configure kubeconfig from GitHub Secret (assumes base64-encoded data)
       - name: Configure kubeconfig
         run: |
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+           mkdir -p $HOME/.kube
+           echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
 
       # 3. Deploy Kubernetes Manifests
       - name: Deploy to Kubernetes
