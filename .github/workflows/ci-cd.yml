@@ -1,0 +1,105 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # 2. Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      # 3. Frontend build and test
+      - name: Install Frontend Dependencies
+        working-directory: ./expensy_frontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: ./expensy_frontend
+        run: npm run build
+
+      - name: Test Frontend
+        working-directory: ./expensy_frontend
+        run: npm test
+
+      # 4. Backend build and test
+      - name: Install Backend Dependencies
+        working-directory: ./expensy_backend
+        run: npm install
+
+      - name: Build Backend
+        working-directory: ./expensy_backend
+        run: npm run build
+
+      - name: Test Backend
+        working-directory: ./expensy_backend
+        run: npm test
+
+  docker-build-push:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout the code again for Docker builds
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # 2. Set up Docker Buildx (for multi-platform builds, if needed)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # 3. Log in to Docker Hub using credentials from GitHub Secrets
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 4. Build and Push Frontend Image
+      - name: Build & Push Frontend Image
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest \
+            ./expensy_frontend \
+            --build-arg NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          docker push ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest
+
+      # 5. Build and Push Backend Image
+      - name: Build & Push Backend Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest ./expensy_backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest
+
+  deploy:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    environment:
+      name: production  # Use GitHub Environments for manual approvals if required.
+    steps:
+      # 1. Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # 2. Configure kubeconfig from GitHub Secret (assumes base64-encoded data)
+      - name: Configure kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+
+      # 3. Deploy Kubernetes Manifests
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/configs/
+          kubectl apply -f k8s/backend/
+          kubectl apply -f k8s/frontend/
+          kubectl rollout restart deployment/backend-deployment
+          kubectl rollout restart deployment/frontend-deployment

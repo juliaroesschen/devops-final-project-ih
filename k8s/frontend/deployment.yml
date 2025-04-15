@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: expensy-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: expensy-frontend
+  template:
+    metadata:
+      labels:
+        app: expensy-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: juliaroesschen/expensy-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+

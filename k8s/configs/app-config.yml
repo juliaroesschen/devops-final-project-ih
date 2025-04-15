@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  NEXT_PUBLIC_API_URL: "http://backend-service.default.svc.cluster.local"
+  DATABASE_URI: "mongodb://root:example@mongo:27017/expensy?authSource=admin"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: "someredispassword"
