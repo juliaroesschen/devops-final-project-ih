@@ -62,14 +62,14 @@ jobs:
         run: |
           docker build \
             -t ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest \
-            ./expensy_frontend \
+            ./expensy_frontend/Dockerfile.frontend \
             --build-arg NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
           docker push ${{ secrets.DOCKER_USERNAME }}/expensy-frontend:latest
 
       # 5. Build and Push Backend Image
       - name: Build & Push Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest ./expensy_backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest ./expensy_backend/Dockerfile.backend
           docker push ${{ secrets.DOCKER_USERNAME }}/expensy-backend:latest
 
   deploy:
