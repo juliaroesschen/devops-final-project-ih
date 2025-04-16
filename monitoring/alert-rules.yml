@@ -1,0 +1,22 @@
+groups:
+- name: node-alerts
+  rules:
+  - alert: HighNodeCPUUsage
+    expr: sum by(instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.8
+    for: 5m
+    labels:
+      severity: "critical"
+    annotations:
+      summary: "High CPU usage detected on {{ $labels.instance }}"
+      description: "CPU usage on node {{ $labels.instance }} has exceeded 80% for more than 5 minutes."
+
+- name: pod-alerts
+  rules:
+  - alert: PodNotReady
+    expr: count(kube_pod_status_ready{condition="false"}) > 0
+    for: 2m
+    labels:
+      severity: "warning"
+    annotations:
+      summary: "One or more pods are not ready"
+      description: "A pod is in a non-ready state for over 2 minutes."

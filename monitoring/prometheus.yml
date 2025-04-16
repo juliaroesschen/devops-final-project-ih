@@ -1,0 +1,37 @@
+# Global configuration: Sets how often Prometheus scrapes metrics and evaluates rules.
+global:
+  scrape_interval: 15s        # How frequently to scrape targets.
+  evaluation_interval: 15s      # How frequently to evaluate alert rules.
+
+# Specify the alert rules file that contains your custom alerts.
+rule_files:
+  - /etc/config/alert.rules.yml   # Prometheus will load alert rules from this path.
+
+scrape_configs:
+  # 1. Node Metrics via node_exporter.
+  # These targets use the internal IPs of your EKS nodes.
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['192.168.17.209:9100', '192.168.35.216:9100'] 
+        # Replace with your node IPs and the port where node_exporter is running.
+
+  # 2. Kube-State Metrics.
+  # Assumes kube-state-metrics is deployed in the "monitoring" namespace.
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['kube-state-metrics.monitoring.svc.cluster.local:8080']
+
+  # 3. cAdvisor Metrics.
+  # Usually, cAdvisor is exposed by the Kubelet on port 10255 for non-TLS access.
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['192.168.17.209:10255', '192.168.35.216:10255']
+        # Again, using your node internal IPs; adjust if your setup differs.
+
+# Alerting configuration:
+# Points Prometheus to Alertmanager for alert notifications.
+alerting:
+  alertmanagers:
+  - static_configs:
+      - targets: ['alertmanager.monitoring.svc.cluster.local:9093']
+        # Assumes Alertmanager is running in the monitoring namespace on port 9093.
