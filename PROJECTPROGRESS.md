@@ -1,4 +1,4 @@
-# Day 1 – Local Setup & Integration Testing
+# Local Setup & Integration Testing
 
 ## Changes Made
 
@@ -25,3 +25,7 @@
   Adding `?authSource=admin` guarantees that the authentication happens against the correct database (admin), where the credentials were set up during container initialization.
 - **Reliable Integration:**  
   Successful connections to both MongoDB and Redis, along with a working frontend that can add an expense, confirm that our local development environment is fully integrated and functional.
+
+# Prometheus Monitoring Setup
+
+Focused on integrating Prometheus monitoring into the EKS cluster setup. Created a monitoring/ folder containing the core configuration files (prometheus.yml and alert-rules.yml) to define scrape jobs (node‑exporter, kube‑state‑metrics, cAdvisor) and custom alerts (HighNodeCPUUsage, PodNotReady). Developed Kubernetes manifests under k8s/prometheus/, including two ConfigMaps (one for the main Prometheus config, one for alert rules), a ServiceAccount, a Deployment that mounts those ConfigMaps alongside an emptyDir volume for storage, and a LoadBalancer Service to expose the Prometheus UI on port 80. Applied each manifest with kubectl apply, monitored the rollout, and confirmed that the Prometheus pod reached a healthy running state. Tested the external LoadBalancer DNS for the /graph and /-/healthy endpoints, troubleshooting storage and endpoint binding issues along the way.
