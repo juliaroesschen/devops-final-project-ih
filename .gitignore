@@ -1,2 +1,4 @@
 .terraform/
 infrastructure/eks/.terraform/
+.terraform/
+infrastructure/eks/.terraform/
