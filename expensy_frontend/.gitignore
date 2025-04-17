@@ -34,3 +34,6 @@ yarn-error.log*
 
 .contentlayer
 .env
+
+# Ignore all .x5 files
+*.x5
